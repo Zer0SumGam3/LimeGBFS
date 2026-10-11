@@ -20,7 +20,7 @@ concurrency:
 env:
   POLL_MINUTES: "25"       # bounded poll window per run (15 s cadence -> ~100 snapshots)
   KEEP_HOURS: "3"          # rolling snapshot window kept + shipped in the Pages artifact
-  HISTORY_MODE: "rolling"  # rolling = keep ONE refresh commit (force-with-lease); append = normal commits
+  HISTORY_MODE: "append"  # rolling = keep ONE refresh commit (force-with-lease); append = normal commits
 
 jobs:
   refresh:
