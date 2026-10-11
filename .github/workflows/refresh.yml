@@ -1,0 +1,108 @@
+# GBFS refresh -> commit -> GitHub Pages
+# Cron: poll the public Lime GBFS feed (bounded window), rebuild the static
+# site from the snapshots, recommit to main, then deploy site/ to Pages.
+name: refresh-and-deploy
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # hourly at :17 UTC (off-peak; GitHub may delay under load). Private-repo minutes: see DEPLOY.md
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # push the refresh commit to main
+  pages: write      # deploy to GitHub Pages
+  id-token: write   # OIDC for deploy-pages
+
+concurrency:
+  group: refresh-pages
+  cancel-in-progress: false
+
+env:
+  POLL_MINUTES: "25"       # bounded poll window per run (15 s cadence -> ~100 snapshots)
+  KEEP_HOURS: "3"          # rolling snapshot window kept + shipped in the Pages artifact
+  HISTORY_MODE: "rolling"  # rolling = keep ONE refresh commit (force-with-lease); append = normal commits
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"   # stdlib only -- no pip installs needed
+
+      - name: Restore rolling snapshot store (multi-run trip window)
+        uses: actions/cache@v4
+        with:
+          path: data/snapshots
+          key: gbfs-snapshots-${{ github.run_id }}
+          restore-keys: |
+            gbfs-snapshots-
+
+      - name: Poll the public feed (bounded)
+        run: |
+          timeout --signal=TERM --kill-after=30 $((POLL_MINUTES * 60)) \
+            python3 poller.py --interval 15 || echo "poll window ended (exit $?)"
+
+      - name: Rebuild site from snapshots
+        run: python3 build.py
+
+      - name: Prune to rolling window (data + site copies)
+        run: |
+          python3 - <<'PY'
+          import os
+          from datetime import datetime, timezone, timedelta
+          from pathlib import Path
+          keep = timedelta(hours=float(os.environ["KEEP_HOURS"]))
+          now = datetime.now(timezone.utc)
+          removed = 0
+          for base in ("data/snapshots", "site/snapshots"):
+              for p in Path(base).rglob("*.json.gz"):
+                  try:
+                      ts = datetime.strptime(p.name.split(".")[0], "%Y%m%dT%H%M%S").replace(tzinfo=timezone.utc)
+                  except ValueError:
+                      continue
+                  if now - ts > keep:
+                      p.unlink()
+                      removed += 1
+          print(f"pruned {removed} snapshot(s) older than {keep}")
+          PY
+
+      - name: Recommit refresh to main
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ROLLING=""
+          if [ "$HISTORY_MODE" = "rolling" ] && [[ "$(git log -1 --pretty=%s)" == refresh:* ]]; then
+            git reset --soft HEAD~1      # drop our previous refresh commit (kept if it is not ours)
+            ROLLING=1
+          fi
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -m "refresh: $(date -u +%FT%TZ)"
+            if [ -n "$ROLLING" ]; then git push --force-with-lease origin HEAD:main
+            else                        git push origin HEAD:main
+            fi
+          fi
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true   # auto-enable Pages (Source: GitHub Actions) on first run
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site           # includes the rolling snapshots window for OFFLINE mode
+
+  deploy:
+    needs: refresh
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

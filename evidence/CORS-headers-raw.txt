@@ -1,0 +1,41 @@
+### CORS evidence captured 2026-10-10T23:02:32Z from Android device (device network)
+
+### GET with Origin: https://example.com
+HTTP/1.1 200 OK
+Date: Sat, 10 Oct 2026 23:02:33 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Server: cloudflare
+x-frame-options: SAMEORIGIN
+x-xss-protection: 0
+x-content-type-options: nosniff
+x-permitted-cross-domain-policies: none
+referrer-policy: strict-origin-when-cross-origin
+etag: W/"ff1f98831b155ef6d4023ef99ae61862"
+Cache-Control: max-age=0, private, must-revalidate
+Cache-Control: no-cache, no-store
+content-security-policy-report-only: default-src 'self' https:; font-src 'self' https: data:; img-src 'self' https: data:; object-src 'none'; script-src 'self' https: 'unsafe-inline'; style-src 'self' https: 'unsafe-inline'; report-uri /lime-csp-violation-report
+Set-Cookie: _limebike-web_session=AEDIVBp1RQxVYJrsWK4j5%2Fy7qfHcpgbXYIaOquXLGaXHfzEhm%2FdFW8tCKJGk0psffd6OCtSuvtsoDk8TJh9iMGBqyWvFGB5MRLaTbmioOeYpwahLlk509gOsgjdeAr0eW%2Bb%2FeqPuPrsyDTOv5iyzflHC3QEU0rQ8ydOIKwRDfgFPYqfr1Z3YW3G7U%2Fe7Im6Vf0PgBvy8x4I%2B6mVJ5m%2FRw4%2BQBlYwHu%2FtkY1zNDYu4udwi0Bcy2r94nbZDw16Ow%2FkwyetO5itmJ8hjZBYtD4sz0Rc6pVJb60D6iHLmbAUeXPS6Fev0gVZpcWrm3CutR4u5y93KuF%2F6%2B0FNpA5O%2FKqWQ8rMWZA%2FesfzFERPNnyoD0TaJJ%2ByBUoonGSmczG1JnPQxUAx3GpkSQ1QrE7k%2F9t52OGslUhb2oW0vCjuQl38S4aMKL9k7NKODR%2F9gri1lB9Pj8w1GX1qJ1JhXPBuc%2ByHyUfybptN%2FkFOPJWtSopCdgmuSCE4PH04p2PMZakPoUC0IiK%2BC3tvVLjK9IxN9W9g74l6UKln6j2vdZURf1yngNl5M%2Bmj24Tir%2FRkXiN4lb1CAATmLcuGzD50ybIrZakuUwcpsVJ--CU%2BK2xLCF%2BIXhcqr--omlVh4hoXT3E%2FWEssILIIA%3D%3D; path=/; secure; HttpOnly; SameSite=Lax
+set-cookie: __cf_bm=O4KDMBU2WeDs98qInOgaiZLi4P56H4XboC_zDwo.u78-1791673353.273957-1.0.1.1-OMzPo2At2z4mganxRBEWGCPUj8rh_gxDHwtQYWW6m8VnWkJOrtIJj2r0a73npmvjVTinLK4525i8FgWVmcZTsqD4OnuteZCJPnvKXG1ZaGTVtW1PxEcyFJTVesDkiFdx; HttpOnly; SameSite=None; Secure; Path=/; Domain=lime.bike; Expires=Sat, 10 Oct 2026 23:32:33 GMT
+x-request-id: ec7f20dc-9135-4eeb-aa00-62923e871626
+x-runtime: 0.113555
+strict-transport-security: max-age=63072000; includeSubDomains
+vary: Accept, Accept-Encoding, Origin
+pragma: no-cache
+cf-cache-status: DYNAMIC
+CF-RAY: a48940d9faf0a63a-LAX
+
+
+### OPTIONS preflight
+HTTP/1.1 200 OK
+Date: Sat, 10 Oct 2026 23:02:35 GMT
+Content-Length: 0
+Connection: keep-alive
+set-cookie: __cf_bm=FD.ScbeAUdyaXIjy4zKto8rfQkvbAWBdRVFJmoExmm4-1791673355.137025-1.0.1.1-aySrjtqn9pF5eCVm4OZhBSYnN3vGzJwyttl0rzkDSWhbjSTGA4LtsYbBKytxacTXUatq62SwbAZyQzjmH.PvNmB_ZXIunIUvQb7_2EqGtZP5AmQ2wUsglS2rmQBvxeyO; HttpOnly; SameSite=None; Secure; Path=/; Domain=lime.bike; Expires=Sat, 10 Oct 2026 23:32:35 GMT
+Server: cloudflare
+pragma: no-cache
+Cache-Control: no-cache, no-store
+cf-cache-status: DYNAMIC
+CF-RAY: a48940e59df0a425-LAX
+

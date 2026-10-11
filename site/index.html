@@ -1,0 +1,142 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tel Aviv GBFS per-bike trip-linkage dossier</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Ccircle%20cx='10'%20cy='16'%20r='6'%20fill='%232a78d6'/%3E%3Ccircle%20cx='22'%20cy='16'%20r='6'%20fill='%23eb6834'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="vendor/leaflet.css?v=a7837102">
+<link rel="stylesheet" href="assets/style.css?v=c100a071">
+</head><body data-page="index">
+<header class="top">
+  <h1>Tel Aviv &mdash; per-bike trails, labeled with businesses</h1>
+  <div class="sub">Public <code>data.lime.bike</code> GBFS <code>free_bike_status</code> snapshots (dense ~15&nbsp;s).
+  Each persistent <code>bike_id</code> leaves the feed when a rental starts and reappears under the <b>same id</b> when it ends.
+  <b>Any bike_id ever seen in the public feed renders its own labeled trail</b>: street map, per-endpoint nearest venue,
+  and a chronological timeline. Headline statistics are <b>confirmed-only</b> (classifier). Vehicle-level/statistical
+  output only &mdash; no person-identifying inference.</div>
+  <nav class="tabs">
+    <a class="on" href="index.html">Tel Aviv dossier</a>
+    <a href="chains.html">Identity chains</a>
+    <a href="trips-map.png">Headline PNG</a>
+  </nav>
+</header>
+<main>
+
+  <section>
+    <h2>Data source &amp; runtime mode <span class="pill">client-side &middot; no backend</span></h2>
+    <div class="panel">
+      <div class="row">
+        <span class="modebtns">
+          <button data-mode="offline" class="on">Offline / local</button>
+          <button data-mode="live">Live feed</button>
+        </span>
+        <button id="btnManifest">load ./snapshots/</button>
+        <button id="btnIdb">load IndexedDB</button>
+        <button id="btnClear">clear IndexedDB</button>
+      </div>
+      <div class="row">
+        <button id="btnLive" class="primary">start live</button>
+        <button id="btnProbe">test live feed (CORS)</button>
+        <button id="btnSnapExport">export snapshots JSON</button>
+        <label class="badge" style="cursor:pointer">import snapshots JSON
+          <input id="snapImport" type="file" accept=".json,application/json" style="display:none"></label>
+        <button id="btnCsv">export trips CSV</button>
+        <button id="btnJson">export trips JSON</button>
+      </div>
+      <div id="drop" class="drop">drag &amp; drop a <code>snapshots/</code> folder here (or click to pick one)
+        &mdash; <code>.json</code> and <code>.json.gz</code>.</div>
+      <input id="dirInput" type="file" webkitdirectory multiple style="display:none">
+      <div class="row"><span class="status" id="srcstatus"></span></div>
+      <div class="note" id="manifestinfo"></div>
+      <div class="note">OFFLINE/LOCAL reconstructs trips in the browser from snapshots in
+        <code>./snapshots/</code> (or dragged in / restored from IndexedDB). LIVE fetches the public feed directly;
+        if the feed blocks browser CORS the page says so &mdash; keep OFFLINE as the lead mode (see README).</div>
+    </div>
+  </section>
+
+  <div class="tiles" id="tiles"><div class="tile"><div class="v">&hellip;</div><div class="k">loading</div></div></div>
+
+  <section>
+    <h2>Per-bike labeled trails <span class="pill">centerpiece</span></h2>
+    <div class="note" style="margin-bottom:10px">Click any bike to open its full trail: street map with
+    <span style="color:#2a78d6">start</span>/<span style="color:#eb6834">stop</span> markers, each endpoint labeled with its
+    nearest mapped business (30/50/100&nbsp;m tiers), plus a chronological timeline table.</div>
+    <div class="toolbar">
+      <input type="search" id="bsearch" placeholder="open any bike_id (uuid) or first 8 chars" size="50">
+      <button id="bgo">open trail</button>
+      <span class="pill" id="dircount"></span>
+    </div>
+    <div class="note" id="bres"></div>
+    <table><thead><tr><th class="num">#</th><th>bike_id</th><th class="num">confirmed trips</th>
+    <th class="num">venues &le;50 m</th><th class="num">km</th><th class="num">active h</th>
+    <th class="num">obs</th><th>first seen</th><th>last seen</th><th></th></tr></thead>
+    <tbody id="dir"></tbody></table>
+    <div class="note" id="dirnote"></div>
+  </section>
+
+  <section>
+    <h2>Flagship exhibits &mdash; one bike's day, labeled</h2>
+    <div class="note" style="margin-bottom:10px">Each thumbnail below is the prebuilt render of a single
+    vehicle's confirmed day in Tel Aviv &mdash; every start/stop marker labeled with the nearest mapped business;
+    click a thumbnail to open the full-size PNG, or &ldquo;open trail&rdquo; for the interactive version.</div>
+    <div id="flagship" class="note"></div>
+  </section>
+
+  <section>
+    <h2>Tel Aviv trip map <span class="pill" id="cnt"></span></h2>
+    <div class="toolbar">
+      <span class="badge">layers</span>
+      <label class="chk"><input type="checkbox" id="lay_starts" checked> starts</label>
+      <label class="chk"><input type="checkbox" id="lay_stops" checked> stops</label>
+      <label class="chk"><input type="checkbox" id="lay_connectors" checked> connectors</label>
+      <label class="chk"><input type="checkbox" id="lay_trails" checked> per-bike trail</label>
+      <label class="chk"><input type="checkbox" id="lay_pois"> POI businesses</label>
+      <span class="badge">tiers</span>
+      <label class="chk"><input type="checkbox" id="tier_ride_confirmed" checked> confirmed (solid)</label>
+      <label class="chk"><input type="checkbox" id="tier_ride_probable" checked> probable (dotted)</label>
+      <label class="chk"><input type="checkbox" id="tier_judder"> judder (hidden)</label>
+    </div>
+    <div class="map" id="map"></div>
+    <div class="legend">
+      <span><i style="background:#2a78d6"></i>trip start</span>
+      <span><i style="background:#eb6834"></i>trip stop</span>
+      <span><i class="line" style="border-color:#6f7f96"></i>confirmed</span>
+      <span><i class="line" style="border-color:#b08a6a"></i>probable</span>
+      <span><i class="line" style="border-color:#9b9a93"></i>judder (off by default)</span>
+      <span><i style="background:#eda100"></i>business (OSM)</span>
+    </div>
+    <div class="note">Basemap: vendored OpenStreetMap raster tiles served locally &mdash;
+      &copy; OpenStreetMap contributors (ODbL). No runtime tile requests.</div>
+  </section>
+
+  <section>
+    <h2>Raw vs confirmed <span class="pill">classifier</span></h2>
+    <table><thead><tr><th>tier</th><th class="num">pairs</th><th class="num">median m</th><th class="num">p95 m</th>
+    <th class="num">%&gt;10 m</th><th>meaning</th></tr></thead><tbody id="ba"></tbody></table>
+    <div id="classbars" style="margin-top:12px"></div>
+  </section>
+
+  <section>
+    <h2>Endpoint&ndash;business correlation <span class="pill">aggregate (secondary)</span></h2>
+    <div class="tiles" id="poitiles"></div>
+    <table><thead><tr><th>endpoint set</th><th class="num">endpoints</th><th class="num">&le;30 m</th>
+    <th class="num">&le;50 m</th><th class="num">&le;100 m</th></tr></thead><tbody id="poirows"></tbody></table>
+    <div class="note" id="poinote"></div>
+    <h3>Top venues by endpoint count (within 30 m)</h3>
+    <table><thead><tr><th>venue</th><th>category</th><th class="num">endpoints</th>
+    <th class="num">starts</th><th class="num">stops</th></tr></thead><tbody id="vrows"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Confirmed trip table <span class="pill" id="tcnt"></span></h2>
+    <table><thead><tr><th>bike</th><th>tier</th><th class="num">conf</th><th>dropout</th><th>reappear</th>
+    <th class="num">gap s</th><th class="num">len m</th><th>start venue</th><th>stop venue</th></tr></thead>
+    <tbody id="trows"></tbody></table>
+  </section>
+</main>
+<footer>Static build from snapshot polling (rebuilds every ~10 min) or fully in-browser from a
+<code>snapshots/</code> folder. &middot; <a href="chains.html">identity chains</a> &middot;
+<a href="trips-map.png">headline PNG</a> &middot; data <code>data.lime.bike</code> public GBFS;
+basemap &copy; OpenStreetMap contributors (ODbL). Vehicle-level statistical data only.</footer>
+<script src="vendor/leaflet.js?v=db49d009"></script>
+<script src="assets/gbfs-algo.js?v=1f5bf66d"></script>
+<script src="assets/app.js?v=7b89222e"></script>
+</body></html>

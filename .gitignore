@@ -1,0 +1,9 @@
+# Runtime state: kept on the runner (restored via actions/cache) and shipped
+# inside the Pages artifact, but never committed -- raw snapshots would add
+# ~17 MB per run to git history. The deployed site still includes them.
+data/snapshots/
+site/snapshots/
+data/poller.log
+data/poller.pid
+data/snapshot-index.tsv
+__pycache__/

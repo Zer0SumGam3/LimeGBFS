@@ -1,0 +1,4 @@
+# CORS probe result (page context) -- Android device browser
+#   page: http://127.0.0.1:8898/cors.html  ->  fetch(LIVE_URL, {mode:'cors'})
+#   observed: 'CORS BLOCKED'  TypeError: Failed to fetch
+#   date: 2026-10-10T23:25:30Z
